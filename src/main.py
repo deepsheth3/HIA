@@ -3,6 +3,9 @@ from utils.pdf_utils import PDFUtils
 from utils.validators import FileValidator
 from config.app_config import AppConfig
 from utils.text_utils import TextUlits
+from ai.prompt_builder import PromptBuilder
+from services.ai_services import AIServices
+
 st.set_page_config(page_title=AppConfig.APP_TITLE)
 
 st.title(AppConfig.APP_TITLE)
@@ -19,6 +22,9 @@ if 'has_processed' not in st.session_state:
 
 if 'file_hash' not in st.session_state:
     st.session_state.file_hash = None
+
+if 'ai_response' not in st.session_state:
+    st.session_state.ai_response = None
 
 # -------------------------
 # Detect NEW file by content
@@ -44,21 +50,23 @@ if uploaded_file is not None:
             max_filesize_mb=AppConfig.MAX_FILESIZE_MB
         )
 
-        st.success("File validated successfully!")
+        st.success('File validated successfully!')
 
-        if st.button("Analyze PDF", disabled=st.session_state.has_processed):
+        if st.button('Analyze PDF', disabled=st.session_state.has_processed):
             raw_text = PDFUtils.extract_text_from_pdf(pdf_bytes)
             st.session_state.extracted_text = TextUlits.clean_extracted_text(raw_text)
             st.session_state.has_processed = True
+            prompt = PromptBuilder.build_health_report_prompt(st.session_state.extracted_text)
+            st.session_state.ai_response = AIServices.analyze_report(prompt=prompt)
             st.rerun()
 
     except ValueError as e:
         st.error(str(e))
 
-if st.session_state.extracted_text:
+if st.session_state.ai_response:
     st.subheader('Extracted Text')      
     st.text_area(
-        'PDF Conent',
-        st.session_state.extracted_text,
+        'AI Response',
+        st.session_state.ai_response,
         height= 300
     )
