@@ -4,7 +4,14 @@ from utils.validators import FileValidator
 from config.app_config import AppConfig
 from utils.text_utils import TextUlits
 from ai.prompt_builder import PromptBuilder
-from services.ai_services import AIServices
+from services.ai_services import AIService
+
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 st.set_page_config(page_title=AppConfig.APP_TITLE)
 
@@ -57,7 +64,7 @@ if uploaded_file is not None:
             st.session_state.extracted_text = TextUlits.clean_extracted_text(raw_text)
             st.session_state.has_processed = True
             prompt = PromptBuilder.build_health_report_prompt(st.session_state.extracted_text)
-            st.session_state.ai_response = AIServices.analyze_report(prompt=prompt)
+            st.session_state.ai_response = AIService.analyze_report(prompt=prompt)
             st.rerun()
 
     except ValueError as e:
